@@ -78,10 +78,14 @@ export interface Settings {
     jokers: boolean;
 }
 
+export interface Users {
+    [userId: string]: User;
+}
+
 export interface GameData {
     hostId: string;
     gameOn: boolean;
-    users: User[];
+    users: Users;
     deck: Card[];
     settings: Settings;
 }

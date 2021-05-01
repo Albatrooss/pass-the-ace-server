@@ -1,4 +1,4 @@
-import { Card, GameData, MessageGrp } from './types';
+import { Card, GameData } from './types';
 
 export const defaultDeck: Card[] = [
     'sA',
@@ -55,15 +55,12 @@ export const defaultDeck: Card[] = [
     'cK',
 ];
 
-export const defaultMessage: MessageGrp = {
-    username: '',
-    messages: ['Welcome to Pass the Ace!'],
-};
+export const defaultMessage: string = 'Welcome to Pass the Ace!';
 
 export const defaultGameData: GameData = {
     hostId: '',
     gameOn: false,
-    users: [],
+    users: {},
     deck: [],
     settings: {
         lives: 3,
