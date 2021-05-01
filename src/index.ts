@@ -11,7 +11,7 @@ const app = express();
 
 const httpServer = createServer(app);
 
-app.get('/', (req, res) => res.send('HELLO WORLD'));
+app.get('/', (_, res) => res.send('HELLO WORLD'));
 
 const io = new Server(httpServer, {
     cors: {
