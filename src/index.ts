@@ -1,4 +1,5 @@
 import { Server } from 'socket.io';
+import express from 'express';
 import { createServer } from 'http';
 import { Card, JoinData, Lobby } from './util/types';
 import { shuffle } from './util/shuffle';
@@ -6,7 +7,11 @@ import { defaultDeck, defaultMessage } from './util/constants';
 import { properNoun } from './util/properNoun';
 import { createChat } from './util/createChat';
 
-const httpServer = createServer();
+const app = express();
+
+const httpServer = createServer(app);
+
+app.get('/', (req, res) => res.send('HELLO WORLD'));
 
 const io = new Server(httpServer, {
     cors: {
