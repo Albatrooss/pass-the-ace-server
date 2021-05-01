@@ -72,10 +72,18 @@ export interface Lobby {
     gameData: GameData;
 }
 
+export interface Settings {
+    lives: number;
+    bus: boolean;
+    jokers: boolean;
+}
+
 export interface GameData {
+    hostId: string;
     gameOn: boolean;
     users: User[];
     deck: Card[];
+    settings: Settings;
 }
 
 export interface JoinData {
