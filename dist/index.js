@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const socket_io_1 = require("socket.io");
 const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
 const http_1 = require("http");
 const shuffle_1 = require("./util/shuffle");
 const constants_1 = require("./util/constants");
@@ -12,7 +13,12 @@ const properNoun_1 = require("./util/properNoun");
 const createChat_1 = require("./util/createChat");
 const app = express_1.default();
 const httpServer = http_1.createServer(app);
+app.use(cors_1.default());
 app.get('/', (_, res) => res.send('HELLO WORLD'));
+app.get('/ping', (_, res) => {
+    console.log('pinging!');
+    res.json({ connected: false });
+});
 const io = new socket_io_1.Server(httpServer, {
     cors: {
         origin: '*',

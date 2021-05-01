@@ -1,5 +1,6 @@
 import { Server } from 'socket.io';
 import express from 'express';
+import cors from 'cors';
 import { createServer } from 'http';
 import { Card, JoinData, Lobby } from './util/types';
 import { shuffle } from './util/shuffle';
@@ -11,7 +12,14 @@ const app = express();
 
 const httpServer = createServer(app);
 
+app.use(cors());
+
 app.get('/', (_, res) => res.send('HELLO WORLD'));
+
+app.get('/ping', (_, res) => {
+    console.log('pinging!');
+    res.json({ connected: false });
+});
 
 const io = new Server(httpServer, {
     cors: {
