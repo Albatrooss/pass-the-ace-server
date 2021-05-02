@@ -45,7 +45,7 @@ io.on('connection', socket => {
                 '',
                 `${properNoun(username)} has left the Game`,
             );
-            io.to(lobbyId).emit('chat', lobbyData[lobbyId].chat);
+            sendChat(lobbyId);
         }
 
         // REMOVE FROM USERIDS
@@ -56,6 +56,8 @@ io.on('connection', socket => {
 
         // CHECK IF HOST NEEDS TO CHANGE
         const wasHost = lobbyData[lobbyId].gameData.hostId === userId;
+        // REMOVE FROM GAMEDATA USERS
+        delete lobbyData[lobbyId].gameData.users[userId];
         if (wasHost && Object.keys(lobbyData[lobbyId].gameData.users).length) {
             let newHostId = Object.values(lobbyData[lobbyId].gameData.users)[0]
                 .id;
@@ -65,21 +67,20 @@ io.on('connection', socket => {
             lobbyData[lobbyId].chat = createChat(
                 lobbyData[lobbyId].chat,
                 '',
-                `${
-                    Object.values(lobbyData[lobbyId].gameData.users)[0].username
-                } is now the host`,
+                `${properNoun(
+                    Object.values(lobbyData[lobbyId].gameData.users)[0]
+                        .username,
+                )} is now the host`,
             );
+            sendChat(lobbyId);
         }
-
-        // REMOVE FROM GAMEDATA USERS
-        delete lobbyData[lobbyId].gameData.users[userId];
 
         // DELETE LOBBY IF EMPTY
         if (!lobbyData[lobbyId].userIds.length) {
             delete lobbyData[lobbyId];
             return;
         }
-        io.to(lobbyId).emit('game', lobbyData[lobbyId].gameData);
+        sendGame(lobbyId);
     });
 
     socket.on('firstJoin', (data: JoinData) => {
@@ -103,8 +104,8 @@ io.on('connection', socket => {
                     '',
                     `${properNoun(username)} has joined the Game`,
                 );
-                io.to(lobbyId).emit('game', lobbyData[lobbyId].gameData);
-                io.to(lobbyId).emit('chat', lobbyData[lobbyId].chat);
+                sendGame(lobbyId);
+                sendChat(lobbyId);
                 return;
             }
             console.log('creating lobby');
@@ -178,8 +179,8 @@ io.on('connection', socket => {
             '',
             `${properNoun(username)} has joined the Game`,
         );
-        io.to(lobbyId).emit('chat', lobbyData[lobbyId].chat);
-        io.to(lobbyId).emit('game', lobbyData[lobbyId].gameData);
+        sendChat(lobbyId);
+        sendGame(lobbyId);
     });
 
     socket.on('leaveLobby', () => {
@@ -210,8 +211,8 @@ io.on('connection', socket => {
         }
 
         username = null;
-        io.to(lobbyId).emit('game', lobbyData[lobbyId].gameData);
-        io.to(lobbyId).emit('chat', lobbyData[lobbyId].chat);
+        sendGame(lobbyId);
+        sendChat(lobbyId);
     });
 
     socket.on('getChat', () => {
@@ -227,8 +228,22 @@ io.on('connection', socket => {
             username,
             text,
         );
-        io.to(lobbyId).emit('chat', lobbyData[lobbyId].chat);
+        sendChat(lobbyId);
     });
+
+    socket.on('startGame', () => {
+        if (!lobbyId) return; //TODO
+        lobbyData[lobbyId].gameData.gameOn = true;
+        sendGame(lobbyId);
+    });
+
+    function sendChat(lobbyId: string) {
+        io.to(lobbyId).emit('chat', lobbyData[lobbyId].chat);
+    }
+
+    function sendGame(lobbyId: string) {
+        io.to(lobbyId).emit('game', lobbyData[lobbyId].gameData);
+    }
 });
 
 const PORT = process.env.PORT || 5000;

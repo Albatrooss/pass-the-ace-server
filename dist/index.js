@@ -16,8 +16,7 @@ const httpServer = http_1.createServer(app);
 app.use(cors_1.default());
 app.get('/', (_, res) => res.send('HELLO WORLD'));
 app.get('/ping', (_, res) => {
-    console.log('pinging!');
-    res.json({ connected: false });
+    res.json({ connected: true });
 });
 const io = new socket_io_1.Server(httpServer, {
     cors: {
@@ -37,25 +36,27 @@ io.on('connection', socket => {
             return;
         if (username) {
             lobbyData[lobbyId].chat = createChat_1.createChat(lobbyData[lobbyId].chat, '', `${properNoun_1.properNoun(username)} has left the Game`);
-            io.to(lobbyId).emit('chat', lobbyData[lobbyId].chat);
+            sendChat(lobbyId);
         }
         const userIdIdx = (_a = lobbyData[lobbyId]) === null || _a === void 0 ? void 0 : _a.userIds.findIndex(u => u === userId);
         if (userIdIdx !== -1)
             lobbyData[lobbyId].userIds.splice(userIdIdx, 1);
         const wasHost = lobbyData[lobbyId].gameData.hostId === userId;
+        delete lobbyData[lobbyId].gameData.users[userId];
         if (wasHost && Object.keys(lobbyData[lobbyId].gameData.users).length) {
             let newHostId = Object.values(lobbyData[lobbyId].gameData.users)[0]
                 .id;
             lobbyData[lobbyId].hostId = newHostId;
             lobbyData[lobbyId].gameData.hostId = newHostId;
-            lobbyData[lobbyId].chat = createChat_1.createChat(lobbyData[lobbyId].chat, '', `${Object.values(lobbyData[lobbyId].gameData.users)[0].username} is now the host`);
+            lobbyData[lobbyId].chat = createChat_1.createChat(lobbyData[lobbyId].chat, '', `${properNoun_1.properNoun(Object.values(lobbyData[lobbyId].gameData.users)[0]
+                .username)} is now the host`);
+            sendChat(lobbyId);
         }
-        delete lobbyData[lobbyId].gameData.users[userId];
         if (!lobbyData[lobbyId].userIds.length) {
             delete lobbyData[lobbyId];
             return;
         }
-        io.to(lobbyId).emit('game', lobbyData[lobbyId].gameData);
+        sendGame(lobbyId);
     });
     socket.on('firstJoin', (data) => {
         console.log('New user to lobby: ', data.lobbyId);
@@ -73,8 +74,8 @@ io.on('connection', socket => {
                     dealer: false,
                 };
                 lobbyData[lobbyId].chat = createChat_1.createChat(lobbyData[lobbyId].chat, '', `${properNoun_1.properNoun(username)} has joined the Game`);
-                io.to(lobbyId).emit('game', lobbyData[lobbyId].gameData);
-                io.to(lobbyId).emit('chat', lobbyData[lobbyId].chat);
+                sendGame(lobbyId);
+                sendChat(lobbyId);
                 return;
             }
             console.log('creating lobby');
@@ -143,8 +144,8 @@ io.on('connection', socket => {
             dealer: false,
         };
         lobbyData[lobbyId].chat = createChat_1.createChat(lobbyData[lobbyId].chat, '', `${properNoun_1.properNoun(username)} has joined the Game`);
-        io.to(lobbyId).emit('chat', lobbyData[lobbyId].chat);
-        io.to(lobbyId).emit('game', lobbyData[lobbyId].gameData);
+        sendChat(lobbyId);
+        sendGame(lobbyId);
     });
     socket.on('leaveLobby', () => {
         if (!lobbyId || !lobbyData[lobbyId])
@@ -161,8 +162,8 @@ io.on('connection', socket => {
                 .username)} is now the host`);
         }
         username = null;
-        io.to(lobbyId).emit('game', lobbyData[lobbyId].gameData);
-        io.to(lobbyId).emit('chat', lobbyData[lobbyId].chat);
+        sendGame(lobbyId);
+        sendChat(lobbyId);
     });
     socket.on('getChat', () => {
         if (!lobbyId || !userId || !lobbyData[lobbyId])
@@ -174,8 +175,20 @@ io.on('connection', socket => {
         if (!lobbyId || !username)
             return;
         lobbyData[lobbyId].chat = createChat_1.createChat(lobbyData[lobbyId].chat, username, text);
-        io.to(lobbyId).emit('chat', lobbyData[lobbyId].chat);
+        sendChat(lobbyId);
     });
+    socket.on('startGame', () => {
+        if (!lobbyId)
+            return;
+        lobbyData[lobbyId].gameData.gameOn = true;
+        sendGame(lobbyId);
+    });
+    function sendChat(lobbyId) {
+        io.to(lobbyId).emit('chat', lobbyData[lobbyId].chat);
+    }
+    function sendGame(lobbyId) {
+        io.to(lobbyId).emit('game', lobbyData[lobbyId].gameData);
+    }
 });
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => console.log('Server listening on PORT:' + PORT));
