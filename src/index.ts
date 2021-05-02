@@ -17,8 +17,7 @@ app.use(cors());
 app.get('/', (_, res) => res.send('HELLO WORLD'));
 
 app.get('/ping', (_, res) => {
-    console.log('pinging!');
-    res.json({ connected: false });
+    res.json({ connected: true });
 });
 
 const io = new Server(httpServer, {
