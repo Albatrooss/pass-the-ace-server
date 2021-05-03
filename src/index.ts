@@ -249,6 +249,17 @@ io.on('connection', socket => {
         sendGame(lobbyId);
     });
 
+    socket.on('PASS', (nextId: string) => {
+        if (!lobbyId) return; // TODO
+        let gameData = lobbyData[lobbyId].gameData;
+
+        let temp = gameData.users[nextId].card;
+        gameData.users[nextId].card = gameData.users[userId].card;
+        gameData.users[userId].card = temp;
+        lobbyData[lobbyId].gameData = gameData;
+        sendGame(lobbyId);
+    });
+
     function sendChat(lobbyId: string) {
         io.to(lobbyId).emit('chat', lobbyData[lobbyId].chat);
     }
