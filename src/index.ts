@@ -96,7 +96,6 @@ io.on('connection', socket => {
                     id: userId,
                     username,
                     card: null,
-                    dealer: false,
                 };
 
                 lobbyData[lobbyId].chat = createChat(
@@ -131,7 +130,6 @@ io.on('connection', socket => {
                             id: userId,
                             username,
                             card: null,
-                            dealer: false,
                         },
                     },
                     deck,
@@ -141,6 +139,8 @@ io.on('connection', socket => {
                         jokers: false,
                         bus: true,
                     },
+                    order: [],
+                    dealer: null,
                 },
             };
             io.to(userId).emit('game', lobbyData[lobbyId].gameData);
@@ -172,7 +172,6 @@ io.on('connection', socket => {
             id: userId,
             username,
             card: null,
-            dealer: false,
         };
         lobbyData[lobbyId].chat = createChat(
             lobbyData[lobbyId].chat,
@@ -233,7 +232,20 @@ io.on('connection', socket => {
 
     socket.on('startGame', () => {
         if (!lobbyId) return; //TODO
-        lobbyData[lobbyId].gameData.gameOn = true;
+        let gameData = lobbyData[lobbyId].gameData;
+        gameData.gameOn = true;
+        gameData.order = shuffle(
+            Object.keys(lobbyData[lobbyId].gameData.users),
+        );
+        gameData.dealer = lobbyData[lobbyId].gameData.order[0];
+
+        // DEAL CARDS
+        gameData.order.forEach(uId => {
+            if (!gameData.deck.length) return; //TODO
+            let card: Card = gameData.deck.pop() as Card;
+            gameData.users[uId].card = card;
+        });
+        lobbyData[lobbyId].gameData = gameData;
         sendGame(lobbyId);
     });
 

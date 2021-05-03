@@ -1,7 +1,6 @@
 export interface User {
     id: string;
     username: string;
-    dealer: boolean;
     card: Card | null;
 }
 
@@ -88,6 +87,8 @@ export interface GameData {
     users: Users;
     deck: Card[];
     settings: Settings;
+    order: string[];
+    dealer: string | null;
 }
 
 export interface JoinData {

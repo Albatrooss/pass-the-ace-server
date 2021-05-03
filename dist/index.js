@@ -71,7 +71,6 @@ io.on('connection', socket => {
                     id: userId,
                     username,
                     card: null,
-                    dealer: false,
                 };
                 lobbyData[lobbyId].chat = createChat_1.createChat(lobbyData[lobbyId].chat, '', `${properNoun_1.properNoun(username)} has joined the Game`);
                 sendGame(lobbyId);
@@ -100,7 +99,6 @@ io.on('connection', socket => {
                             id: userId,
                             username,
                             card: null,
-                            dealer: false,
                         },
                     },
                     deck,
@@ -110,6 +108,8 @@ io.on('connection', socket => {
                         jokers: false,
                         bus: true,
                     },
+                    order: [],
+                    dealer: null,
                 },
             };
             io.to(userId).emit('game', lobbyData[lobbyId].gameData);
@@ -141,7 +141,6 @@ io.on('connection', socket => {
             id: userId,
             username,
             card: null,
-            dealer: false,
         };
         lobbyData[lobbyId].chat = createChat_1.createChat(lobbyData[lobbyId].chat, '', `${properNoun_1.properNoun(username)} has joined the Game`);
         sendChat(lobbyId);
@@ -180,7 +179,17 @@ io.on('connection', socket => {
     socket.on('startGame', () => {
         if (!lobbyId)
             return;
-        lobbyData[lobbyId].gameData.gameOn = true;
+        let gameData = lobbyData[lobbyId].gameData;
+        gameData.gameOn = true;
+        gameData.order = shuffle_1.shuffle(Object.keys(lobbyData[lobbyId].gameData.users));
+        gameData.dealer = lobbyData[lobbyId].gameData.order[0];
+        gameData.order.forEach(uId => {
+            if (!gameData.deck.length)
+                return;
+            let card = gameData.deck.pop();
+            gameData.users[uId].card = card;
+        });
+        lobbyData[lobbyId].gameData = gameData;
         sendGame(lobbyId);
     });
     function sendChat(lobbyId) {

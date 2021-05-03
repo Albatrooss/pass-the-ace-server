@@ -66,5 +66,7 @@ exports.defaultGameData = {
         jokers: false,
         bus: true,
     },
+    order: [],
+    dealer: null,
 };
 //# sourceMappingURL=constants.js.map

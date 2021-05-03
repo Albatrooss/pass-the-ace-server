@@ -67,4 +67,6 @@ export const defaultGameData: GameData = {
         jokers: false,
         bus: true,
     },
+    order: [],
+    dealer: null,
 };
