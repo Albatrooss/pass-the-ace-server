@@ -2,6 +2,8 @@ export interface User {
     id: string;
     username: string;
     card: Card | null;
+    lives: number;
+    bus: boolean;
 }
 
 export type Card =

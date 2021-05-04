@@ -2,7 +2,7 @@ import { Server } from 'socket.io';
 import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
-import { Card, JoinData, Lobby } from './util/types';
+import { Card, JoinData, Lobby, Settings } from './util/types';
 import { shuffle } from './util/shuffle';
 import { defaultDeck, defaultMessage } from './util/constants';
 import { properNoun } from './util/properNoun';
@@ -101,6 +101,8 @@ io.on('connection', socket => {
                     id: userId,
                     username,
                     card: null,
+                    lives: lobbyData[lobbyId].gameData.settings.lives,
+                    bus: lobbyData[lobbyId].gameData.settings.bus,
                 };
 
                 lobbyData[lobbyId].chat = createChat(
@@ -135,6 +137,8 @@ io.on('connection', socket => {
                             id: userId,
                             username,
                             card: null,
+                            lives: 3,
+                            bus: false,
                         },
                     },
                     deck,
@@ -177,6 +181,8 @@ io.on('connection', socket => {
             id: userId,
             username,
             card: null,
+            lives: lobbyData[lobbyId].gameData.settings.lives,
+            bus: lobbyData[lobbyId].gameData.settings.bus,
         };
         lobbyData[lobbyId].chat = createChat(
             lobbyData[lobbyId].chat,
@@ -235,13 +241,14 @@ io.on('connection', socket => {
         sendChat(lobbyId);
     });
 
-    socket.on('startGame', () => {
+    socket.on('startGame', (settings: Settings) => {
         if (!lobbyId) return; //TODO
         let gameData = lobbyData[lobbyId].gameData;
         gameData.gameOn = true;
         gameData.order = shuffle(
             Object.keys(lobbyData[lobbyId].gameData.users),
         );
+        gameData.settings = settings;
         gameData.turn = 0;
 
         // DEAL CARDS
@@ -249,6 +256,8 @@ io.on('connection', socket => {
             if (!gameData.deck.length) return; //TODO
             let card: Card = gameData.deck.pop() as Card;
             gameData.users[uId].card = card;
+            gameData.users[uId].lives = settings.lives;
+            gameData.users[uId].bus = settings.bus;
         });
         lobbyData[lobbyId].gameData = gameData;
         sendGame(lobbyId);

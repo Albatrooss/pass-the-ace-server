@@ -71,6 +71,8 @@ io.on('connection', socket => {
                     id: userId,
                     username,
                     card: null,
+                    lives: lobbyData[lobbyId].gameData.settings.lives,
+                    bus: lobbyData[lobbyId].gameData.settings.bus,
                 };
                 lobbyData[lobbyId].chat = createChat_1.createChat(lobbyData[lobbyId].chat, '', `${properNoun_1.properNoun(username)} has joined the Game`);
                 sendGame(lobbyId);
@@ -99,6 +101,8 @@ io.on('connection', socket => {
                             id: userId,
                             username,
                             card: null,
+                            lives: 3,
+                            bus: false,
                         },
                     },
                     deck,
@@ -141,6 +145,8 @@ io.on('connection', socket => {
             id: userId,
             username,
             card: null,
+            lives: lobbyData[lobbyId].gameData.settings.lives,
+            bus: lobbyData[lobbyId].gameData.settings.bus,
         };
         lobbyData[lobbyId].chat = createChat_1.createChat(lobbyData[lobbyId].chat, '', `${properNoun_1.properNoun(username)} has joined the Game`);
         sendChat(lobbyId);
@@ -176,18 +182,21 @@ io.on('connection', socket => {
         lobbyData[lobbyId].chat = createChat_1.createChat(lobbyData[lobbyId].chat, username, text);
         sendChat(lobbyId);
     });
-    socket.on('startGame', () => {
+    socket.on('startGame', (settings) => {
         if (!lobbyId)
             return;
         let gameData = lobbyData[lobbyId].gameData;
         gameData.gameOn = true;
         gameData.order = shuffle_1.shuffle(Object.keys(lobbyData[lobbyId].gameData.users));
+        gameData.settings = settings;
         gameData.turn = 0;
         gameData.order.forEach(uId => {
             if (!gameData.deck.length)
                 return;
             let card = gameData.deck.pop();
             gameData.users[uId].card = card;
+            gameData.users[uId].lives = settings.lives;
+            gameData.users[uId].bus = settings.bus;
         });
         lobbyData[lobbyId].gameData = gameData;
         sendGame(lobbyId);
