@@ -54,6 +54,11 @@ io.on('connection', socket => {
         );
         if (userIdIdx !== -1) lobbyData[lobbyId].userIds.splice(userIdIdx, 1);
 
+        // PRESERVE DATA IF GAME NO
+        // if (lobbyData[lobbyId].gameData.gameOn) {
+        //     return;
+        // }
+
         // CHECK IF HOST NEEDS TO CHANGE
         const wasHost = lobbyData[lobbyId].gameData.hostId === userId;
         // REMOVE FROM GAMEDATA USERS
@@ -140,7 +145,7 @@ io.on('connection', socket => {
                         bus: true,
                     },
                     order: [],
-                    dealer: null,
+                    turn: 0,
                 },
             };
             io.to(userId).emit('game', lobbyData[lobbyId].gameData);
@@ -237,7 +242,7 @@ io.on('connection', socket => {
         gameData.order = shuffle(
             Object.keys(lobbyData[lobbyId].gameData.users),
         );
-        gameData.dealer = lobbyData[lobbyId].gameData.order[0];
+        gameData.turn = 0;
 
         // DEAL CARDS
         gameData.order.forEach(uId => {
@@ -249,13 +254,62 @@ io.on('connection', socket => {
         sendGame(lobbyId);
     });
 
-    socket.on('PASS', (nextId: string) => {
+    socket.on('PASS', () => {
         if (!lobbyId) return; // TODO
         let gameData = lobbyData[lobbyId].gameData;
 
+        let nextId = gameData.order[gameData.turn + 1];
+
         let temp = gameData.users[nextId].card;
+        if (!temp) return; //TODO
+        gameData.turn++;
+
+        if (['sK', 'dK', 'hK', 'cK'].includes(temp)) {
+            //CHECK FOR KING
+            lobbyData[lobbyId].gameData = gameData;
+            sendGame(lobbyId);
+            return;
+        }
         gameData.users[nextId].card = gameData.users[userId].card;
         gameData.users[userId].card = temp;
+        lobbyData[lobbyId].gameData = gameData;
+
+        sendGame(lobbyId);
+    });
+
+    socket.on('KEEP', () => {
+        if (!lobbyId) return; //TODO
+        lobbyData[lobbyId].gameData.turn++;
+        sendGame(lobbyId);
+    });
+
+    socket.on('CUT', () => {
+        if (!lobbyId) return; //TODO
+        const random = Math.floor(
+            Math.random() * lobbyData[lobbyId].gameData.deck.length,
+        );
+        const newCard = lobbyData[lobbyId].gameData.deck[random];
+        lobbyData[lobbyId].gameData.users[userId].card = newCard;
+        lobbyData[lobbyId].gameData.turn++;
+        sendGame(lobbyId);
+    });
+
+    socket.on('deal', () => {
+        if (!lobbyId) return; // TODO
+
+        let gameData = lobbyData[lobbyId].gameData;
+        let oldOrder = gameData.order;
+        let temp = oldOrder.pop() as Card;
+        gameData.order = [temp, ...gameData.order];
+        gameData.turn = 0;
+        gameData.deck = [...defaultDeck];
+        // DEAL CARDS
+        console.log('deck length', gameData.deck.length);
+        gameData.order.forEach(uId => {
+            if (!gameData.deck.length) return; //TODO
+            let card: Card = gameData.deck.pop() as Card;
+            gameData.users[uId].card = card;
+        });
         lobbyData[lobbyId].gameData = gameData;
         sendGame(lobbyId);
     });

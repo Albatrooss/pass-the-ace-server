@@ -109,7 +109,7 @@ io.on('connection', socket => {
                         bus: true,
                     },
                     order: [],
-                    dealer: null,
+                    turn: 0,
                 },
             };
             io.to(userId).emit('game', lobbyData[lobbyId].gameData);
@@ -182,7 +182,7 @@ io.on('connection', socket => {
         let gameData = lobbyData[lobbyId].gameData;
         gameData.gameOn = true;
         gameData.order = shuffle_1.shuffle(Object.keys(lobbyData[lobbyId].gameData.users));
-        gameData.dealer = lobbyData[lobbyId].gameData.order[0];
+        gameData.turn = 0;
         gameData.order.forEach(uId => {
             if (!gameData.deck.length)
                 return;
@@ -192,13 +192,56 @@ io.on('connection', socket => {
         lobbyData[lobbyId].gameData = gameData;
         sendGame(lobbyId);
     });
-    socket.on('PASS', (nextId) => {
+    socket.on('PASS', () => {
         if (!lobbyId)
             return;
         let gameData = lobbyData[lobbyId].gameData;
+        let nextId = gameData.order[gameData.turn + 1];
         let temp = gameData.users[nextId].card;
+        if (!temp)
+            return;
+        gameData.turn++;
+        if (['sK', 'dK', 'hK', 'cK'].includes(temp)) {
+            lobbyData[lobbyId].gameData = gameData;
+            sendGame(lobbyId);
+            return;
+        }
         gameData.users[nextId].card = gameData.users[userId].card;
         gameData.users[userId].card = temp;
+        lobbyData[lobbyId].gameData = gameData;
+        sendGame(lobbyId);
+    });
+    socket.on('KEEP', () => {
+        if (!lobbyId)
+            return;
+        lobbyData[lobbyId].gameData.turn++;
+        sendGame(lobbyId);
+    });
+    socket.on('CUT', () => {
+        if (!lobbyId)
+            return;
+        const random = Math.floor(Math.random() * lobbyData[lobbyId].gameData.deck.length);
+        const newCard = lobbyData[lobbyId].gameData.deck[random];
+        lobbyData[lobbyId].gameData.users[userId].card = newCard;
+        lobbyData[lobbyId].gameData.turn++;
+        sendGame(lobbyId);
+    });
+    socket.on('deal', () => {
+        if (!lobbyId)
+            return;
+        let gameData = lobbyData[lobbyId].gameData;
+        let oldOrder = gameData.order;
+        let temp = oldOrder.pop();
+        gameData.order = [temp, ...gameData.order];
+        gameData.turn = 0;
+        gameData.deck = [...constants_1.defaultDeck];
+        console.log('deck length', gameData.deck.length);
+        gameData.order.forEach(uId => {
+            if (!gameData.deck.length)
+                return;
+            let card = gameData.deck.pop();
+            gameData.users[uId].card = card;
+        });
         lobbyData[lobbyId].gameData = gameData;
         sendGame(lobbyId);
     });

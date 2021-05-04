@@ -88,7 +88,7 @@ export interface GameData {
     deck: Card[];
     settings: Settings;
     order: string[];
-    dealer: string | null;
+    turn: number;
 }
 
 export interface JoinData {

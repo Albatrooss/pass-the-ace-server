@@ -68,5 +68,5 @@ export const defaultGameData: GameData = {
         bus: true,
     },
     order: [],
-    dealer: null,
+    turn: 0,
 };

@@ -67,6 +67,6 @@ exports.defaultGameData = {
         bus: true,
     },
     order: [],
-    dealer: null,
+    turn: 0,
 };
 //# sourceMappingURL=constants.js.map
