@@ -96,4 +96,5 @@ export interface GameData {
 export interface JoinData {
     lobbyId: string;
     username: string;
+    id?: string;
 }
